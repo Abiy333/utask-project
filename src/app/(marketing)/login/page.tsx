@@ -9,7 +9,7 @@ export default function Page() {
 
   const handleLogin = (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    router.push("/dashboard");
+    router.push("/admin");
   };
 
   return (
