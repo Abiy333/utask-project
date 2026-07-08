@@ -1,16 +1,42 @@
 "use client";
 
-import React from "react";
+import {React, useState} from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function Page() {
   const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");  
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.SyntheticEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError("");
+  setLoading(true);
+
+  try {
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }), 
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Invalid credentials.");
+    } 
+    setEmail("");
+    setPassword("");
     router.push("/admin/dashboard");
-  };
+  } catch (err: any) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-white font-sans flex flex-col justify-between overflow-x-hidden selection:bg-[#4fbca9] selection:text-white pt-36">
@@ -18,6 +44,12 @@ export default function Page() {
         <h1 className="text-xl md:text-2xl font-bold text-[#232331] text-center mb-8 tracking-wide uppercase font-sans">
           Log In
         </h1>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 text-red-600 text-xs font-semibold rounded-lg border border-red-100">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div className="space-y-1.5">
@@ -32,6 +64,8 @@ export default function Page() {
               id="email"
               name="email"
               required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-[#4fbca9] focus:ring-1 focus:ring-[#4fbca9] transition-all"
             />
           </div>
@@ -48,16 +82,19 @@ export default function Page() {
               id="password"
               name="password"
               required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-[#4fbca9] focus:ring-1 focus:ring-[#4fbca9] transition-all"
             />
 
-            <div className="flex justify-end pt-1">
+            <div className="flex justify-between pt-1">
               <Link
                 href="/forgot-password"
                 className="text-[10px] md:text-xs font-semibold text-[#4fbca9] hover:underline tracking-wide"
               >
                 Forgot your password?
               </Link>
+              <Link href="/signup" className="text-[13px] md:text-xs font-bold text-[#4fbca9] hover:underline tracking-wide">Sign up</Link>
             </div>
           </div>
 
@@ -65,9 +102,10 @@ export default function Page() {
           <div className="pt-2">
             <button
               type="submit"
+              disabled={loading}
               className="w-full bg-[#ff8143] hover:bg-[#e67339] text-white text-xs md:text-sm font-bold tracking-wide py-3 rounded-lg shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all uppercase"
             >
-              Continue
+              {loading ? "Authenticating..." : "Continue"}
             </button>
           </div>
         </form>
